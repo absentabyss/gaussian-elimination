@@ -1,0 +1,2 @@
+- Float to Frac and Frac to Float conversion.
+- Admit floats inside CSV.

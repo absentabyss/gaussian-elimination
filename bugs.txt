@@ -1,0 +1,2 @@
+- GCD, LCM and Fracs don't handle division by 0.
+- Integer overflow is not handled in Frac operations.

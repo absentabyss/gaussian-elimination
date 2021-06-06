@@ -4,3 +4,4 @@
 - Change delimiting CSV value (currently `\n`).
 - Change u_function signature to allow for error handling.
 - Unit test everything!
+- Improve Makefile.

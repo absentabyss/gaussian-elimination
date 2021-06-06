@@ -13,4 +13,3 @@ And **cleaning**:
 `make clean`
 ### Notes
 The function prefix `u_` stands for *unsafe*, meaning that the function offers no error handling. Usually these functions return `void`, a structure that has no defined error element or an `int` but error handling is incomplete.
-Currently

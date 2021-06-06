@@ -22,6 +22,7 @@ void fracMatrixDestroy(FracMatrix* m) {
 }
 
 int u_fracMatrixAddRow(FracMatrix* m, size_t row, const Frac* fracArray, size_t length) {
+	// Replaces all the values in `row` with those of the fracArray.
 	if (length != (*m).cols)
 		return -1;
 	for (size_t j = 0; j < (*m).cols; ++j) {
@@ -30,22 +31,25 @@ int u_fracMatrixAddRow(FracMatrix* m, size_t row, const Frac* fracArray, size_t 
 	return 0;
 }
 
-int u_fracMatrixElem0(FracMatrix* m, size_t rowa, size_t rowb) {
+int u_fracMatrixSwapRows(FracMatrix* m, size_t rowa, size_t rowb) {
+	// Elementary row operation 0.
 	Frac* tmp = (*m).data[rowa];
 	(*m).data[rowa] = (*m).data[rowb];
 	(*m).data[rowb] = tmp;
 	return 0;
 }
 
-int u_fracMatrixElem1(FracMatrix* m, size_t row, Frac scalar) {
+int u_fracMatrixMultiplyRowByScalar(FracMatrix* m, size_t row, const Frac* scalar) {
+	// Elementary row operation 1.
 	for (size_t j = 0; j < (*m).cols; ++j)
-		(*m).data[row][j] = u_fracMultiply(&(*m).data[row][j], &scalar);
+		(*m).data[row][j] = u_fracMultiply(&(*m).data[row][j], scalar);
 	return 0;
 }
 
-int u_fracMatrixElem2(FracMatrix* m, size_t rowa, size_t rowb, Frac scalar) {
+int u_fracMatrixAddRowMultiple(FracMatrix* m, size_t rowa, size_t rowb, const Frac* scalar) {
+	// Elementary row operation 2.
 	for (size_t j = 0; j < (*m).cols; ++j) {
-		Frac rowbScaled = u_fracMultiply(&(*m).data[rowb][j], &scalar);
+		Frac rowbScaled = u_fracMultiply(&(*m).data[rowb][j], scalar);
 		(*m).data[rowa][j] = u_fracAdd(&(*m).data[rowa][j], &rowbScaled);
 	}
 	return 0;
@@ -74,19 +78,26 @@ void u_fracMatrixReduceFracs(FracMatrix* m) {
 }
 
 int u_readCSVAsFracMatrix(Frac* f, size_t f_size, size_t* rows, size_t* cols) {
+	// Reads CSV from STDIN as a matrix.
 	size_t row = 0;
 	size_t col = 0;
 	size_t maxWidth = (size_t)-1;
 	while (1) {
+		/* First scans for a value, then checks if the following character is a
+		 * `,` or a `;`.
+		 * `,`s increase the col value while `;`s increase the row value.
+		 * It also checks that the same amount of `,` are between consecutive
+		 * `;`s.
+		 */
 		int i, j;
-		int scans = scanf("%d/%d", &i, &j);
-		if (scans == 2) {											// Should handle ints and floats.
-			size_t index = maxWidth * row + col;
+		int scans = scanf("%d/%d", &i, &j);							// Should handle ints and floats.
+		if (scans == 2) {											// Checks if a match was successful.
+			size_t index = maxWidth * row + col;					// Note that this "flattens" a matrix to an array.
 			if (col > maxWidth) {
 				return -1;
 			}
 			if (index >= f_size) {
-				f = (Frac*)realloc(f, sizeof(Frac) * f_size * 2);
+				f = (Frac*)realloc(f, sizeof(Frac) * f_size * 2);	// This assumes the pointer passed was allocated before. UB if it wasn't.
 				f_size *= 2;
 			}
 			f[index] = (Frac){i, j};
@@ -95,7 +106,7 @@ int u_readCSVAsFracMatrix(Frac* f, size_t f_size, size_t* rows, size_t* cols) {
 			return -1;
 		}
 
-		char c = fgetc(stdin);										// Check delimiting character.
+		char c = fgetc(stdin);										// Checks delimiting character.
 		if (c == ';') {
 			if (!row) {
 				maxWidth = col;
@@ -107,8 +118,8 @@ int u_readCSVAsFracMatrix(Frac* f, size_t f_size, size_t* rows, size_t* cols) {
 			col = 0;
 		} else if (c == ',') {
 			continue;
-		} else if (c == '\n') {										// Find a better way of terminating.
-			if (!row) {												// It's a bit odd that this is repeated.
+		} else if (c == '\n') {										// This is an ugly way of terminating. :/
+			if (!row) {												// It's a bit odd that this check is repeated. Maybe it can be refactored.
 				maxWidth = col;
 			}
 			if (col != maxWidth) {
@@ -125,13 +136,17 @@ int u_readCSVAsFracMatrix(Frac* f, size_t f_size, size_t* rows, size_t* cols) {
 }
 
 void u_fracMatrixFillWithFracArray(FracMatrix* m, const Frac* f, const size_t rows, const size_t cols) {
+	/* Fills FracMatrix with values from array. It probably SEGFAULTs if the
+	 * size of f is smaller than rows * cols.
+	 */
 	*m = u_fracMatrixCreate(rows, cols);
-	for (size_t i = 0; i < rows; ++i) {					// Off by 1.
-		u_fracMatrixAddRow(m, i, &f[i * cols], cols);	// Off by 1.
+	for (size_t i = 0; i < rows; ++i) {
+		u_fracMatrixAddRow(m, i, &f[i * cols], cols);
 	}
 }
 
 void u_fracMatrixToCSV(const FracMatrix* m) {
+	// Outputs FracMatrix contents to STDOUT as CSV.
 	for (size_t i = 0; i < (*m).rows; ++i) {
 		for (size_t j = 0; j < (*m).cols; ++j) {
 			printf("%d/%d", (*m).data[i][j].numerator, (*m).data[i][j].denominator);
@@ -144,12 +159,13 @@ void u_fracMatrixToCSV(const FracMatrix* m) {
 }
 
 FracMatrix u_getFracMatrixFromCSV() {
-	size_t f_size = 64;
-	Frac* f =  (Frac*)malloc(sizeof(Frac) * f_size);
 	size_t rows;
 	size_t cols;
 
-	u_readCSVAsFracMatrix(f, f_size, &rows, &cols);
+	size_t f_size = 64;
+	Frac* f =  (Frac*)malloc(sizeof(Frac) * f_size);
+
+	u_readCSVAsFracMatrix(f, f_size, &rows, &cols);		// This function requires Frac* f to be in heap as it uses realloc.
 
 	FracMatrix m;
 	u_fracMatrixFillWithFracArray(&m, f, rows, cols);

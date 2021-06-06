@@ -1,17 +1,27 @@
 #include "utils.h"
 
-int u_charAmount(int i) {
-	int sign = 0;
-	if (i < 0) {
-		i *= -1;
-		sign = 1;
+void swapIfDescending(int* a, int* b){
+	if (a >= b)
+		return;
+	int* temp = a;
+	a = b;
+	b = temp;
+}
+
+int u_gcd(const int a, const int b) {
+	// Euclidean algorithm for computing the greatest common divisor (GCD).
+	int hi = a;
+	int lo = b;
+	swapIfDescending(&hi, &lo);
+	int temp;
+	while (lo != 0) {
+		temp = lo;
+		lo = hi % lo;
+		hi = temp;
 	}
-	int digitCount = 1;
-	while (1) {
-		if (i < 10)
-			break;
-		i /= 10;
-		digitCount++;
-	}
-	return digitCount + sign;
+	return hi;
+}
+
+int u_lcm(const int a, const int b) {
+	return (a * b) / u_gcd(a, b);
 }

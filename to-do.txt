@@ -1,2 +1,6 @@
 - Float to Frac and Frac to Float conversion.
 - Admit floats inside CSV.
+- Read from file.
+- Change delimiting CSV value (currently `\n`).
+- Change u_function signature to allow for error handling.
+- Unit test everything!

@@ -2,6 +2,6 @@
 - Admit floats inside CSV.
 - Read from file.
 - Change delimiting CSV value (currently `\n`).
-- Change u_function signature to allow for error handling.
+- Change u_function signature to return int error code and use parameters passed by reference for extra return structs.
 - Unit test everything!
 - Improve Makefile.

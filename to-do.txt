@@ -1,3 +1,5 @@
+- safeIntAdd, safeIntMultiply.
+
 - Float to Frac and Frac to Float conversion.
 - Admit floats inside CSV.
 - Read from file.
